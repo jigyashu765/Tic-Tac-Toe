@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css" id="main-css">
+    <title>Tic-Tac-Toe Game</title>
+</head>
+
+<body>
+
+    <body>
+        <div id="navbar">
+            <a>Tic - Tac - Toe</a>
+            <h4><span id="turn-set"></span>'s Turn</h4>
+        </div>
+
+
+        <div id="container">
+            <div id="drag-cross">
+                <div id="drag-box">
+                    <div class="cross" draggable="true" ondragstart="drag(event)" id="cross1"></div>
+                </div>
+                <div id="drag-box">
+                    <div class="cross" draggable="true" ondragstart="drag(event)" id="cross2"></div>
+                </div>
+                <div id="drag-box">
+                    <div class="cross" draggable="true" ondragstart="drag(event)" id="cross3"></div>
+                </div>
+                <div id="drag-box">
+                    <div class="cross" draggable="true" ondragstart="drag(event)" id="cross4"></div>
+                </div>
+                <div id="drag-box">
+                    <div class="cross" draggable="true" ondragstart="drag(event)" id="cross5"></div>
+                </div>
+            </div>
+
+            <div id="board">
+                <div class="drop-box" ondrop="drop(event)" ondragover="allowDrop(event)" data-position="0"></div>
+                <div class="drop-box" ondrop="drop(event)" ondragover="allowDrop(event)" data-position="1"></div>
+                <div class="drop-box" ondrop="drop(event)" ondragover="allowDrop(event)" data-position="2"></div>
+                <div class="drop-box" ondrop="drop(event)" ondragover="allowDrop(event)" data-position="3"></div>
+                <div class="drop-box" ondrop="drop(event)" ondragover="allowDrop(event)" data-position="4"></div>
+                <div class="drop-box" ondrop="drop(event)" ondragover="allowDrop(event)" data-position="5"></div>
+                <div class="drop-box" ondrop="drop(event)" ondragover="allowDrop(event)" data-position="6"></div>
+                <div class="drop-box" ondrop="drop(event)" ondragover="allowDrop(event)" data-position="7"></div>
+                <div class="drop-box" ondrop="drop(event)" ondragover="allowDrop(event)" data-position="8"></div>
+            </div>
+
+            <div id="drag-circle">
+                <div id="drag-box">
+                    <div class="circle" draggable="true" ondragstart="drag(event)" id="circle1"></div>
+                </div>
+                <div id="drag-box">
+                    <div class="circle" draggable="true" ondragstart="drag(event)" id="circle2"></div>
+                </div>
+                <div id="drag-box">
+                    <div class="circle" draggable="true" ondragstart="drag(event)" id="circle3"></div>
+                </div>
+                <div id="drag-box">
+                    <div class="circle" draggable="true" ondragstart="drag(event)" id="circle4"></div>
+                </div>
+                <div id="drag-box">
+                    <div class="circle" draggable="true" ondragstart="drag(event)" id="circle5"></div>
+                </div>
+            </div>
+        </div>
+        <div id="scores">
+            <p class="score">Score X: <span id="scoreX">0</span></p>
+            <p class="score">Score O: <span id="scoreO">0</span></p>
+        </div>
+        <div class="buttons">
+            <button class="reset" onclick="resetGame()">Reset Game</button>
+            <button class="scorereset" onclick="resetScores()">Reset Scores</button>
+        </div>
+    </body>
+
+
+    <script>
+        let boardState = Array(9).fill(null);
+        const winPatterns = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ];
+        const previousWinner = sessionStorage.getItem('previousWinner');
+        let currentTurn = previousWinner ? previousWinner : 'X';
+        let scores = { X: 0, O: 0 };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDraggableStatus();
+            loadScores();
+            displayScores();
+            const previousWinner = sessionStorage.getItem('previousWinner');
+            if (previousWinner) {
+                currentTurn = previousWinner;
+            }
+        });
+
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        function drag(event) {
+            if ((currentTurn === 'X' && event.target.classList.contains('cross')) ||
+                (currentTurn === 'O' && event.target.classList.contains('circle'))) {
+                event.dataTransfer.setData("text", event.target.id);
+            }
+        }
+
+        function drop(event) {
+            event.preventDefault();
+            const data = event.dataTransfer.getData("text");
+            const target = event.target;
+            if (!target.hasChildNodes() && target.classList.contains('drop-box')) {
+                const draggedElement = document.getElementById(data);
+                target.appendChild(draggedElement);
+                updateBoardState(target.dataset.position, data);
+                draggedElement.setAttribute('draggable', 'false');
+                draggedElement.style.pointerEvents = 'none';
+                checkWinner();
+                switchTurn();
+            }
+        }
+
+        function updateBoardState(position, data) {
+            const marker = data.includes('cross') ? 'X' : 'O';
+            boardState[position] = marker;
+        }
+
+        function checkWinner() {
+            for (let pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
+                    updateScore(boardState[a]);
+                    sessionStorage.setItem('previousWinner', boardState[a]);
+                    setTimeout(() => alert(`${boardState[a]} wins!`), 10);
+                    return;
+                }
+            }
+            if (boardState.every(cell => cell)) {
+                setTimeout(() => alert("It's a draw!"), 10);
+                window.location.reload();
+            }
+        }
+
+        function switchTurn() {
+            currentTurn = currentTurn === 'X' ? 'O' : 'X';
+            updateDraggableStatus();
+        }
+
+        function updateDraggableStatus() {
+            document.querySelectorAll('.cross').forEach(cross => {
+                cross.setAttribute('draggable', currentTurn === 'X');
+            });
+            document.querySelectorAll('.circle').forEach(circle => {
+                circle.setAttribute('draggable', currentTurn === 'O');
+            });
+            document.getElementById("turn-set").innerHTML = currentTurn;
+        }
+
+        function resetGame() {
+            const previousWinner = sessionStorage.getItem('previousWinner');
+            currentTurn = previousWinner ? previousWinner : 'X';
+            boardState.fill(null);
+            document.querySelectorAll('.drop-box').forEach(box => box.innerHTML = '');
+            resetDraggables();
+            updateDraggableStatus();
+            window.location.reload();
+        }
+
+        function resetDraggables() {
+            const crosses = document.querySelectorAll('.cross');
+            const circles = document.querySelectorAll('.circle');
+            const dragBoxCross = document.getElementById('drag-cross');
+            const dragBoxCircle = document.getElementById('drag-circle');
+            crosses.forEach(cross => {
+                if (!dragBoxCross.contains(cross) && !document.querySelector('.drop-box').contains(cross)) {
+                    dragBoxCross.appendChild(cross);
+                }
+                cross.setAttribute('draggable', 'true');
+                cross.style.pointerEvents = 'auto';
+            });
+            circles.forEach(circle => {
+                if (!dragBoxCircle.contains(circle) && !document.querySelector('.drop-box').contains(circle)) {
+                    dragBoxCircle.appendChild(circle);
+                }
+                circle.setAttribute('draggable', 'true');
+                circle.style.pointerEvents = 'auto';
+            });
+        }
+
+        function updateScore(winner) {
+            scores[winner]++;
+            localStorage.setItem('scores', JSON.stringify(scores));
+            displayScores();
+            window.location.reload();
+        }
+
+        function loadScores() {
+            const storedScores = localStorage.getItem('scores');
+            if (storedScores) {
+                scores = JSON.parse(storedScores);
+            }
+        }
+
+        function displayScores() {
+            document.getElementById('scoreX').textContent = scores.X;
+            document.getElementById('scoreO').textContent = scores.O;
+        }
+
+        function resetScores() {
+            scores = { X: 0, O: 0 };
+            localStorage.setItem('scores', JSON.stringify(scores));
+            displayScores();
+        }
+
+    </script>
+
+</body>
+
+
+</body>
+
+</html>
